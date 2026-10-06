@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "Acesso Negado";
+}
+
+<div style="max-width: 500px; margin: 60px auto; text-align: center;">
+    <div class="card" style="padding: 40px; border-top: 4px solid var(--status-extreme);">
+        <i data-lucide="shield-alert" style="width: 56px; height: 56px; color: var(--status-extreme); margin-bottom: 16px;"></i>
+        <h2>Acesso Restrito</h2>
+        <p style="margin: 16px 0 24px; opacity: 0.85;">
+            Não tem permissão para aceder a esta funcionalidade. Esta área exige privilégios de <strong>Administrador</strong>.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <a asp-controller="Home" asp-action="Index" class="btn" style="background: var(--text-main);"><i data-lucide="home"></i> Página Inicial</a>
+            <a asp-controller="Account" asp-action="Login" class="btn"><i data-lucide="log-in"></i> Mudar de Conta</a>
+        </div>
+    </div>
+</div>

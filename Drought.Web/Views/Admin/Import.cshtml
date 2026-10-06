@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "Área de Administração";
+}
+
+<!-- Flash Alerts -->
+@if (TempData["Resultado"] != null)
+{
+    <div style="background: rgba(58, 107, 72, 0.12); border-left: 5px solid var(--accent); padding: 16px 20px; border-radius: var(--radius-soft); margin-bottom: 24px; color: var(--accent); font-weight: 600;">
+        <i data-lucide="check-circle" style="vertical-align: middle; margin-right: 8px;"></i>
+        @TempData["Resultado"]
+    </div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div style="background: rgba(164, 56, 32, 0.12); border-left: 5px solid var(--status-extreme); padding: 16px 20px; border-radius: var(--radius-soft); margin-bottom: 24px; color: var(--status-extreme); font-weight: 600;">
+        <i data-lucide="alert-triangle" style="vertical-align: middle; margin-right: 8px;"></i>
+        @TempData["Erro"]
+    </div>
+}
+
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+    <!-- Card 1: Importação CSV -->
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="background: rgba(178, 90, 36, 0.15); color: var(--primary); padding: 10px; border-radius: 10px;">
+                <i data-lucide="upload-cloud" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 1.25rem;">Importação de Dados Climáticos</h3>
+        </div>
+        <p style="opacity: 0.85; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+            Carregue observações multiespectrais Sentinel-1, ASCAT e dados de solo SoilGrids para os distritos de Chókwè e Massinga:
+        </p>
+
+        <form asp-action="Import" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div style="margin-bottom: 16px;">
+                <input type="file" name="file" accept=".csv" required style="width: 100%; box-sizing: border-box; background: #FFF; padding: 12px; border: 2px dashed var(--border);" />
+            </div>
+            <button type="submit" class="btn" style="width: 100%; padding: 12px;">
+                <i data-lucide="file-up"></i> Validar e Importar CSV
+            </button>
+        </form>
+
+        <div style="margin-top: 20px; font-size: 0.8rem; background: rgba(0,0,0,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+            <strong>Cabeçalho Obrigatório:</strong><br>
+            <code>Date,Region,S1_SoilMoisture,ASCAT_SM,Clay,Sand,OrganicCarbon,BulkDensity,DroughtClass</code>
+        </div>
+    </div>
+
+    <!-- Card 2: Re-treino do Modelo -->
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="background: rgba(58, 107, 72, 0.15); color: var(--accent); padding: 10px; border-radius: 10px;">
+                <i data-lucide="refresh-cw" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 1.25rem;">Treino de Modelos ML.NET</h3>
+        </div>
+        <p style="opacity: 0.85; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+            Dispare o pipeline de Machine Learning automatizado. O sistema treina concorrentemente os algoritmos <strong>SDCA</strong> (Linear Multiclasse) e <strong>LightGBM</strong> (Gradient Boosting), avaliando métricas Macro/MicroAccuracy e ativando o campeão.
+        </p>
+
+        <form asp-action="TrainModel" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn" style="background: var(--accent); width: 100%; padding: 12px;">
+                <i data-lucide="cpu"></i> Treinar e Comparar Modelos
+            </button>
+        </form>
+
+        <div style="margin-top: 20px; font-size: 0.85rem; color: #666; line-height: 1.5;">
+            <i data-lucide="info" style="width: 15px; height: 15px; vertical-align: middle;"></i>
+            O modelo com maior <strong>MacroAccuracy</strong> no conjunto de teste será ativado automaticamente para servir as inferências do Dashboard e da API REST.
+        </div>
+    </div>
+</div>

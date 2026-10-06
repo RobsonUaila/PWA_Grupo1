@@ -1,0 +1,192 @@
+@{
+    ViewData["Title"] = "Portal Principal";
+    var activeModel = ViewBag.ActiveModel as Drought.Application.DTOs.ModelMetricsDto;
+    var regionsStatus = ViewBag.RegionsStatus as IEnumerable<dynamic>;
+    int totalObs = ViewBag.TotalObservations ?? 0;
+    int totalPreds = ViewBag.TotalPredictions ?? 0;
+}
+
+<!-- Hero Section -->
+<div class="card" style="background: linear-gradient(135deg, #2F2A26 0%, #433932 100%); color: #F4EFEA; padding: 40px; border-left: 6px solid var(--primary); margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+        <div style="max-width: 800px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(229,168,115,0.2); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; color: var(--secondary); margin-bottom: 16px;">
+                <i data-lucide="award" style="width: 16px; height: 16px;"></i> PROJETO 1 · GRUPO 1 — USTM
+            </div>
+            <h1 style="color: #FFFFFF; font-size: 2.4rem; margin: 0 0 16px; line-height: 1.2;">
+                AI Soil Moisture Drought Classification System
+            </h1>
+            <p style="font-size: 1.1rem; line-height: 1.6; opacity: 0.9; margin-bottom: 24px;">
+                Monitoria de alta precisão e alerta precoce da condição de seca nos distritos de <strong>Chókwè</strong> (Gaza) e <strong>Massinga</strong> (Inhambane), combinando dados de humidade superficial do solo (Sentinel-1, ASCAT) e propriedades edáficas (SoilGrids) processados com <strong>ML.NET</strong>.
+            </p>
+            <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                <a asp-controller="Dashboard" asp-action="Index" class="btn" style="padding: 12px 24px; font-size: 1.05rem;">
+                    <i data-lucide="layout-dashboard"></i> Aceder ao Dashboard & Mapa
+                </a>
+                <a href="/swagger" target="_blank" class="btn" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 12px 20px;">
+                    <i data-lucide="code"></i> Explorar API Swagger
+                </a>
+            </div>
+        </div>
+        <div style="background: rgba(255,255,255,0.06); padding: 20px; border-radius: var(--radius-soft); border: 1px solid rgba(255,255,255,0.1); min-width: 220px;">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--secondary); font-weight: 700;">Contexto Académico</div>
+            <div style="margin-top: 10px; font-size: 0.95rem;">
+                <strong>Disciplina:</strong> PWA (.NET)<br>
+                <strong>Instituição:</strong> USTM<br>
+                <strong>Inspirado em:</strong> AI4Drought-MZ<br>
+                <strong>Stack:</strong> ASP.NET Core 10 & ML.NET
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Cards Grid -->
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 30px;">
+    <!-- Stat 1: Regiões -->
+    <div class="card" style="padding: 24px; display: flex; align-items: center; gap: 18px;">
+        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(58, 107, 72, 0.12); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0;">
+            <i data-lucide="map-pin" style="width: 28px; height: 28px;"></i>
+        </div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #777;">Regiões Alvo</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); font-family: 'Syne';">2 Distritos</div>
+            <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">Chókwè & Massinga</div>
+        </div>
+    </div>
+
+    <!-- Stat 2: Observações -->
+    <div class="card" style="padding: 24px; display: flex; align-items: center; gap: 18px;">
+        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(178, 90, 36, 0.12); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
+            <i data-lucide="database" style="width: 28px; height: 28px;"></i>
+        </div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #777;">Observações Satélite</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); font-family: 'Syne';">@totalObs</div>
+            <div style="font-size: 0.85rem; color: #666;">Sentinel-1 + ASCAT</div>
+        </div>
+    </div>
+
+    <!-- Stat 3: Modelo de IA -->
+    <div class="card" style="padding: 24px; display: flex; align-items: center; gap: 18px;">
+        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(229, 168, 115, 0.25); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
+            <i data-lucide="cpu" style="width: 28px; height: 28px;"></i>
+        </div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #777;">Modelo de Machine Learning</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); font-family: 'Syne';">
+                @(activeModel?.Algorithm ?? "Treino Disponível")
+            </div>
+            <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">
+                @(activeModel != null ? $"Macro-Acc: {activeModel.MacroAccuracy:P1}" : "Pronto para treinar")
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat 4: Previsões -->
+    <div class="card" style="padding: 24px; display: flex; align-items: center; gap: 18px;">
+        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(164, 56, 32, 0.12); display: flex; align-items: center; justify-content: center; color: var(--status-extreme); flex-shrink: 0;">
+            <i data-lucide="activity" style="width: 28px; height: 28px;"></i>
+        </div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #777;">Previsões Registadas</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); font-family: 'Syne';">@totalPreds</div>
+            <div style="font-size: 0.85rem; color: #666;">Histórico e auditoria</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Modules Grid -->
+<h3 style="margin: 30px 0 16px; font-size: 1.5rem;">Funcionalidades Principais do Sistema</h3>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 30px;">
+    <!-- Modulo 1: Dashboard -->
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="background: rgba(178, 90, 36, 0.15); color: var(--primary); padding: 10px; border-radius: 10px;">
+                <i data-lucide="line-chart" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 1.25rem;">Dashboard & Gráficos</h3>
+        </div>
+        <p style="opacity: 0.85; line-height: 1.5; margin-bottom: 20px;">
+            Séries temporais comparativas de humidade do solo (Sentinel-1 vs ASCAT) com filtragem por região e mapa geográfico interativo de monitoria.
+        </p>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn" style="width: 100%;">
+            <i data-lucide="external-link"></i> Abrir Dashboard
+        </a>
+    </div>
+
+    <!-- Modulo 2: Simulador de IA -->
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="background: rgba(58, 107, 72, 0.15); color: var(--accent); padding: 10px; border-radius: 10px;">
+                <i data-lucide="brain-circuit" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 1.25rem;">Classificador de Seca (ML)</h3>
+        </div>
+        <p style="opacity: 0.85; line-height: 1.5; margin-bottom: 20px;">
+            Pipeline de inferência em tempo real com ML.NET. Introduza parâmetros ambientais e obtenha a classificação de risco e nível de confiança.
+        </p>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn" style="background: var(--accent); width: 100%;">
+            <i data-lucide="zap"></i> Testar Classificação
+        </a>
+    </div>
+
+    <!-- Modulo 3: Administração -->
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="background: rgba(229, 168, 115, 0.25); color: var(--primary); padding: 10px; border-radius: 10px;">
+                <i data-lucide="sliders" style="width: 24px; height: 24px;"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 1.25rem;">Módulo de Administração</h3>
+        </div>
+        <p style="opacity: 0.85; line-height: 1.5; margin-bottom: 20px;">
+            Importação de dados brutos CSV, validação de intervalos climáticos e re-treino automático comparando SDCA e LightGBM.
+        </p>
+        <a asp-controller="Admin" asp-action="Import" class="btn" style="background: #2F2A26; color: var(--secondary); width: 100%;">
+            <i data-lucide="settings"></i> Aceder à Administração
+        </a>
+    </div>
+</div>
+
+<!-- Drought Classification Scale Information Table -->
+<div class="card">
+    <h3>Critérios de Classificação da Condição de Seca</h3>
+    <p style="opacity: 0.85; margin-bottom: 20px;">
+        A classificação baseia-se na humidade volumétrica superficial do solo (Sentinel-1) calibrada para as regiões semiáridas de Moçambique:
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Classe</th>
+                <th>Intervalo de Humidade (S1)</th>
+                <th>Impacto Hidrológico & Agrícola</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Normal</strong></td>
+                <td>&gt; 0.30 m³/m³</td>
+                <td>Humidade adequada para a vegetação e culturas agrícolas.</td>
+                <td><span class="badge normal">Normal</span></td>
+            </tr>
+            <tr>
+                <td><strong>Seca Moderada</strong></td>
+                <td>0.20 – 0.30 m³/m³</td>
+                <td>Défice hídrico inicial; atenção recomendada para sementes e pastagens.</td>
+                <td><span class="badge moderada">Moderada</span></td>
+            </tr>
+            <tr>
+                <td><strong>Seca Severa</strong></td>
+                <td>0.10 – 0.20 m³/m³</td>
+                <td>Stresse hídrico agudo nas culturas; restrições hídricas consideráveis.</td>
+                <td><span class="badge severa">Severa</span></td>
+            </tr>
+            <tr>
+                <td><strong>Seca Extrema</strong></td>
+                <td>&lt; 0.10 m³/m³</td>
+                <td>Condições críticas de seca grave; risco elevado de perdas agrícolas totais.</td>
+                <td><span class="badge extrema">Extrema</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

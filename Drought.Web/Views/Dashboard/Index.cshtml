@@ -1,0 +1,357 @@
+@{
+    ViewData["Title"] = "Dashboard de Monitoria";
+    var regions = ViewBag.Regions as List<Drought.Domain.Entities.Region>;
+    var activeModel = ViewBag.ActiveModel as Drought.Application.DTOs.ModelMetricsDto;
+    int? selectedRegionId = ViewBag.SelectedRegionId as int?;
+    var mapDataList = ViewBag.MapData as IEnumerable<dynamic>;
+    var predSuccessJson = TempData["PredictionSuccess"] as string;
+    Drought.Application.DTOs.PredictionResultDto? predResult = null;
+    if (!string.IsNullOrEmpty(predSuccessJson))
+    {
+        predResult = System.Text.Json.JsonSerializer.Deserialize<Drought.Application.DTOs.PredictionResultDto>(predSuccessJson);
+    }
+}
+
+<!-- Flash Alerts -->
+@if (TempData["PredictionError"] != null)
+{
+    <div style="background: rgba(164, 56, 32, 0.1); border-left: 5px solid var(--status-extreme); padding: 14px 20px; border-radius: var(--radius-soft); margin-bottom: 24px; color: var(--status-extreme); font-weight: 600;">
+        <i data-lucide="alert-circle" style="vertical-align: middle; margin-right: 8px;"></i>
+        @TempData["PredictionError"]
+    </div>
+}
+
+@if (predResult != null)
+{
+    var badgeClass = predResult.PredictedClass.ToLower() switch
+    {
+        "normal" => "normal",
+        "secamoderada" or "moderada" => "moderada",
+        "secasevera" or "severa" => "severa",
+        _ => "extrema"
+    };
+
+    <div class="card" style="border: 2px solid var(--primary); background: #FFFDFB; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;">
+                    <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Resultado da Classificação por IA (ML.NET)
+                </div>
+                <h3 style="margin: 0 0 10px; font-size: 1.6rem;">
+                    Região: <strong>@predResult.Region</strong> &mdash; 
+                    <span class="badge @badgeClass" style="font-size: 1.1rem; padding: 6px 16px;">@predResult.PredictedClass</span>
+                </h3>
+                <p style="margin: 0; opacity: 0.85;">
+                    Nível de Confiança: <strong>@predResult.Confidence.ToString("P1")</strong> &middot; Algoritmo: <strong>@predResult.ModelAlgorithm</strong>
+                </p>
+            </div>
+            <div>
+                <a href="#simulatorSection" class="btn" style="padding: 8px 16px; font-size: 0.85rem;">
+                    <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Nova Simulação
+                </a>
+            </div>
+        </div>
+
+        @if (predResult.Probabilities != null && predResult.Probabilities.Count > 0)
+        {
+            <div style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 16px;">
+                <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; color: #666;">Distribuição de Probabilidades:</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    @foreach (var prob in predResult.Probabilities)
+                    {
+                        var pColor = prob.Key.ToLower() switch {
+                            "normal" => "var(--status-normal)",
+                            "secamoderada" => "var(--status-moderate)",
+                            "secasevera" => "var(--status-severe)",
+                            _ => "var(--status-extreme)"
+                        };
+                        <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">
+                                <span>@prob.Key</span>
+                                <span style="color: @pColor;">@prob.Value.ToString("P1")</span>
+                            </div>
+                            <div style="background: #eee; height: 6px; border-radius: 3px; overflow: hidden;">
+                                <div style="width: @((prob.Value * 100).ToString("F0", System.Globalization.CultureInfo.InvariantCulture))%; height: 100%; background: @pColor;"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Top Filter and Overview Row -->
+<div class="grid" style="grid-template-columns: 1fr 2fr; margin-bottom: 24px;">
+    <!-- Filter Card -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
+        <h3 style="margin-top: 0; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="filter" style="width: 20px; height: 20px; color: var(--primary);"></i> Filtrar por Região
+        </h3>
+        <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 16px;">Selecione uma região para isolar o histórico temporal e os dados:</p>
+        <form method="get">
+            <select name="regionId" onchange="this.form.submit()" style="width: 100%; font-weight: 600;">
+                <option value="">Todas as Regiões (Chókwè & Massinga)</option>
+                @if (regions != null)
+                {
+                    foreach (var r in regions)
+                    {
+                        <!option value="@r.Id" @(selectedRegionId == r.Id ? "selected" : "")>@r.Name (@r.Province)</!option>
+                    }
+                }
+            </select>
+        </form>
+    </div>
+
+    <!-- Active Model Metrics Card -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="cpu" style="width: 20px; height: 20px; color: var(--accent);"></i> Modelo de Machine Learning Ativo
+            </h3>
+            @if (activeModel != null)
+            {
+                <span class="badge" style="background: var(--accent); font-size: 0.75rem;">Operacional</span>
+            }
+        </div>
+        
+        @if (activeModel != null)
+        {
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-top: 14px;">
+                <div style="background: rgba(229, 168, 115, 0.12); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #666; font-weight: 600;">Algoritmo</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">@activeModel.Algorithm</div>
+                </div>
+                <div style="background: rgba(58, 107, 72, 0.1); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #666; font-weight: 600;">MacroAccuracy</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: var(--accent);">@activeModel.MacroAccuracy.ToString("P1")</div>
+                </div>
+                <div style="background: rgba(47, 42, 38, 0.05); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #666; font-weight: 600;">MicroAccuracy</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">@activeModel.MicroAccuracy.ToString("P1")</div>
+                </div>
+                <div style="background: rgba(47, 42, 38, 0.05); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #666; font-weight: 600;">Amostras Treino</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">@activeModel.TrainingRows</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div style="padding: 14px; background: rgba(229,168,115,0.15); border-radius: 8px;">
+                <p style="margin: 0 0 10px;">Nenhum modelo treinado na base de dados.</p>
+                <a asp-controller="Admin" asp-action="Import" class="btn" style="padding: 8px 16px; font-size: 0.85rem;">
+                    Treinar Modelo na Administração &rarr;
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Map and Chart Section -->
+<div class="grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+    <!-- Desafio 2.8: Mapa Leaflet -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="map" style="width: 20px; height: 20px; color: var(--primary);"></i> Mapa de Monitoria (Desafio 2.8)
+            </h3>
+            <span style="font-size: 0.8rem; opacity: 0.7;">Chókwè & Massinga</span>
+        </div>
+        <div id="droughtMap" style="height: 380px; width: 100%; border-radius: var(--radius-soft); border: 1px solid var(--border); z-index: 1;"></div>
+        <div style="display: flex; gap: 14px; margin-top: 14px; font-size: 0.8rem; justify-content: center; flex-wrap: wrap;">
+            <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--status-normal);"></span> Normal (&gt;0.30)</span>
+            <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--status-moderate);"></span> Moderada (0.20-0.30)</span>
+            <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--status-severe);"></span> Severa (0.10-0.20)</span>
+            <span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--status-extreme);"></span> Extrema (&lt;0.10)</span>
+        </div>
+    </div>
+
+    <!-- Gráfico de Séries Temporais -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="trending-up" style="width: 20px; height: 20px; color: var(--accent);"></i> Humidade do Solo Temporal
+            </h3>
+            <span style="font-size: 0.8rem; opacity: 0.7;">Sentinel-1 vs ASCAT</span>
+        </div>
+        <div style="height: 380px; position: relative;">
+            <canvas id="moistureChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Live Inference Simulator Widget -->
+<div class="card" id="simulatorSection" style="margin-bottom: 30px; border-left: 6px solid var(--accent);">
+    <div style="margin-bottom: 16px;">
+        <h3 style="margin: 0 0 6px; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="sparkles" style="width: 22px; height: 22px; color: var(--accent);"></i> Simulador de Previsão de Seca em Tempo Real
+        </h3>
+        <p style="margin: 0; opacity: 0.85; font-size: 0.95rem;">
+            Teste o modelo de Machine Learning (ML.NET) diretamente da interface. Introduza uma observação de humidade e características do solo para classificar instantaneamente o risco de seca:
+        </p>
+    </div>
+
+    <form asp-action="Predict" method="post">
+        @Html.AntiForgeryToken()
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">Região</label>
+                <select name="regionId" required style="width: 100%;">
+                    @if (regions != null)
+                    {
+                        foreach (var r in regions)
+                        {
+                            <option value="@r.Id">@r.Name (@r.Province)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">Humidade Sentinel-1 (m³/m³)</label>
+                <input type="number" step="0.001" min="0" max="1" name="s1SoilMoisture" value="0.18" required style="width: 100%; box-sizing: border-box;" />
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">Humidade ASCAT (m³/m³)</label>
+                <input type="number" step="0.001" min="0" max="1" name="ascat" value="0.19" style="width: 100%; box-sizing: border-box;" />
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">Argila / Clay (%)</label>
+                <input type="number" step="0.1" name="clay" value="35.0" style="width: 100%; box-sizing: border-box;" />
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">Areia / Sand (%)</label>
+                <input type="number" step="0.1" name="sand" value="38.0" style="width: 100%; box-sizing: border-box;" />
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">Carbono Orgânico (g/kg)</label>
+                <input type="number" step="0.01" name="organicCarbon" value="1.50" style="width: 100%; box-sizing: border-box;" />
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">Densidade Aparente (kg/dm³)</label>
+                <input type="number" step="0.01" name="bulkDensity" value="1.28" style="width: 100%; box-sizing: border-box;" />
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+            <button type="submit" class="btn" style="padding: 12px 28px;">
+                <i data-lucide="zap"></i> Executar Classificação com ML.NET
+            </button>
+            <span style="font-size: 0.85rem; opacity: 0.7;">
+                Os resultados serão auditados e persistidos na base de dados PostgreSQL.
+            </span>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    // 1. Gráfico de Série Temporal Chart.js
+    const series = @Html.Raw(ViewBag.SeriesJson ?? "[]");
+    const labels = series.map(s => s.Date);
+    const s1 = series.map(s => s.S1_SoilMoisture);
+    const ascat = series.map(s => s.Ascat_SoilMoisture);
+
+    const ctx = document.getElementById('moistureChart');
+    if (ctx && series.length > 0) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Sentinel-1 (S1)',
+                        data: s1,
+                        borderColor: '#B25A24',
+                        backgroundColor: 'rgba(178, 90, 36, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.25,
+                        fill: true,
+                        pointRadius: 2
+                    },
+                    {
+                        label: 'ASCAT',
+                        data: ascat,
+                        borderColor: '#3A6B48',
+                        backgroundColor: 'rgba(58, 107, 72, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.25,
+                        fill: false,
+                        pointRadius: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 0.6,
+                        title: { display: true, text: 'Humidade Volumétrica (m³/m³)' }
+                    },
+                    x: {
+                        ticks: { maxTicksLimit: 12 }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false }
+                }
+            }
+        });
+    }
+
+    // 2. Mapa Interativo Leaflet (Desafio 2.8)
+    const mapContainer = document.getElementById('droughtMap');
+    if (mapContainer) {
+        // Centro entre Chókwè (-24.52) e Massinga (-23.33)
+        const map = L.map('droughtMap').setView([-23.95, 34.35], 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        const getStatusColor = (status) => {
+            switch(status) {
+                case 'Normal': return '#3A6B48';
+                case 'Moderada':
+                case 'SecaModerada': return '#D4A373';
+                case 'Severa':
+                case 'SecaSevera': return '#D67236';
+                case 'Extrema':
+                case 'SecaExtrema': return '#A43820';
+                default: return '#555555';
+            }
+        };
+
+        const mapData = @Html.Raw(ViewBag.MapDataJson ?? "[]");
+
+        mapData.forEach(m => {
+            const color = getStatusColor(m.DroughtClass);
+            
+            const marker = L.circleMarker([m.Latitude, m.Longitude], {
+                radius: 14,
+                fillColor: color,
+                color: '#FFFFFF',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 0.85
+            }).addTo(map);
+
+            marker.bindPopup(`
+                <div style="font-family: 'DM Sans', sans-serif; min-width: 160px;">
+                    <h4 style="margin: 0 0 6px; font-size: 1.1rem; color: #2F2A26;">${m.Name}</h4>
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Província: <strong>${m.Province}</strong></div>
+                    <div style="margin-bottom: 6px;">Estado: <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">${m.DroughtClass}</span></div>
+                    <div style="font-size: 0.85rem;">Humidade S1: <strong>${Number(m.Moisture).toFixed(3)} m³/m³</strong></div>
+                    <div style="font-size: 0.8rem; color: #888; margin-top: 4px;">Data: ${m.Date}</div>
+                </div>
+            `);
+        });
+
+        // Forçar ajuste do tamanho do mapa ao carregar o layout
+        setTimeout(() => { map.invalidateSize(); }, 300);
+    }
+</script>
+}
