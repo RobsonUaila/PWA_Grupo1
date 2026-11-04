@@ -13,7 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Base de dados (PostgreSQL recomendado; SQL Server também suportado)
 // ---------------------------------------------------------------
 builder.Services.AddDbContext<DroughtDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (string.Equals(builder.Configuration["Database:Provider"], "InMemory", StringComparison.OrdinalIgnoreCase))
+        options.UseInMemoryDatabase("Drought.Api");
+    else
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 
 // ---------------------------------------------------------------
 // ASP.NET Core Identity — autenticação e perfis (Admin / Investigador)
@@ -82,7 +87,10 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DroughtDbContext>();
-    await db.Database.MigrateAsync();
+    if (db.Database.IsInMemory())
+        await db.Database.EnsureCreatedAsync();
+    else
+        await db.Database.MigrateAsync();
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var role in new[] { "Administrador", "Investigador" })

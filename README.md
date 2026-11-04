@@ -45,7 +45,8 @@ docs/                  → Documentação técnica detalhada
 
 ## Como Correr o Projeto
 
-### 1. Iniciar a Base de Dados (Docker PostgreSQL)
+### 1. Base de dados
+Por padrão, a aplicação usa uma base de dados **em memória**, portanto não precisa de iniciar o Docker nem o PostgreSQL. Os dados são apagados quando a aplicação é encerrada. Para usar PostgreSQL, altere `Database:Provider` para `PostgreSQL` em `Drought.Web/appsettings.json` e `Drought.Api/appsettings.json` e inicie o contentor:
 ```powershell
 docker compose up -d
 ```
@@ -69,6 +70,8 @@ cd Drought.Tests
 dotnet test
 ```
 
+dotnet run --project Drought.Web --no-build
+dotnet run --project Drought.Api --no-build
 ---
 
 ## Grupo 1 — USTM
